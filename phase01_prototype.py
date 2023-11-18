@@ -78,15 +78,15 @@ def display_spectrogram(filename:str) -> None:
   assert signal.check_COLA('hann', n_fft, hop_length) == True
 
   flat_stft = librosa.stft(reshaped_audiodata, n_fft=n_fft, hop_length=hop_length)
-  print(flat_stft.shape) # flat_stft.shape -> (2, 8193, 528)
+  # print(flat_stft.shape) # flat_stft.shape -> (2, 8193, 528)
   # print(flat_stft[0][0].real)
   # print(flat_stft[0][10].real)
 
   freq_per_frame = np.abs(flat_stft)
   """ Get frequencies for chosen stft window. """
   lib_freqs = librosa.fft_frequencies(sr=dataFile.samplerate, n_fft=n_fft)
-  print(len(lib_freqs), len(freq_per_frame[0]))
-  print(lib_freqs[len(lib_freqs) // 2 - 1])
+  # print(len(lib_freqs), len(freq_per_frame[0]))
+  # print(lib_freqs[len(lib_freqs) // 2 - 1])
   
   """ 1/freq ratio for each frequency """
   reciprocal_freqs = np.reciprocal(lib_freqs, where=lib_freqs>0)
@@ -106,10 +106,31 @@ def display_spectrogram(filename:str) -> None:
       pink normalize? """
   
   # print(len(flat_stft[0].real)) == same as len(reciprocal_freqs)
-
   # flat_stft[0].real *= reciprocal_freqs -> incorrect dimensions
   # flat_stft[1].real *= reciprocal_freqs
 
+  # flat_stft[0][2000].real *= reciprocal_freqs[2000]
+  # print(lib_freqs[2000], reciprocal_freqs[2000])
+  # print(flat_stft[0][2000].real)
+  # print(np.max(flat_stft[0]), flat_stft.shape)
+  """ Old np.max() = 993, New np.max() = 4.9
+      Try multiplying this ratio to all values to try and normalize result """
+
+  reciprocal_freqs *= (993 // 5)
+  
+  # print(len(reciprocal_freqs))
+
+  print(np.angle(flat_stft[0][2000].imag))
+
+  # for i in range(reciprocal_freqs.size):
+  #   flat_stft[0][i].real *= reciprocal_freqs[i]
+  #   # flat_stft[0][i].imag *= np.sqrt(reciprocal_freqs[i])
+  #   flat_stft[1][i].real *= reciprocal_freqs[i]
+  #   # flat_stft[1][i].imag *= np.sqrt(reciprocal_freqs[i])
+  #   # print(i)
+
+  # print(flat_stft[0][2000][:10].imag)
+  # print(np.max(flat_stft[0]), flat_stft.shape)
 
   """ invert the stft transformation """
   # iflat_stft = librosa.istft(flat_stft, n_fft=n_fft, hop_length=hop_length)
@@ -119,8 +140,8 @@ def display_spectrogram(filename:str) -> None:
   # iflat_reshaped = iflat_stft.reshape((iflat_stft.size // 2, 2), order='F')
   # print(iflat_reshaped.shape)
 
-  # with sf.SoundFile('testWriteiSTFT.wav', 'w', 44100, 2, 'PCM_24') as f:
-  #   f.write(iflat_reshaped)
+  # with sf.SoundFile('testReciprocaliSTFT.wav', 'w', 44100, 2, 'PCM_24') as f:
+    # f.write(iflat_reshaped)
 
   """ Does the reshape cause the written file to sound out of phase? 
       NO. (to my ear only). The original appears to sound the same as this written version
