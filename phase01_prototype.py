@@ -89,7 +89,9 @@ def display_spectrogram(filename:str) -> None:
   # print(lib_freqs[len(lib_freqs) // 2 - 1])
   
   """ 1/freq ratio for each frequency """
-  reciprocal_freqs = np.reciprocal(lib_freqs, where=lib_freqs>0)
+  lib_freqs[0] = 1.0 # avoid divide by zero
+  reciprocal_freqs = np.divide(1, lib_freqs)
+  # reciprocal_freqs = np.reciprocal(lib_freqs)
   # for i in range(100):
   #   print(f'freq: {lib_freqs[i]}, reci: {reciprocal_freqs[i]}')
   # print(reciprocal_freqs[0])
@@ -116,32 +118,36 @@ def display_spectrogram(filename:str) -> None:
   """ Old np.max() = 993, New np.max() = 4.9
       Try multiplying this ratio to all values to try and normalize result """
 
-  reciprocal_freqs *= (993 // 5)
+  # reciprocal_freqs *= (993 // 5)
   
   # print(len(reciprocal_freqs))
 
-  print(np.angle(flat_stft[0][2000].imag))
+  # print(flat_stft[0][2000][100:110].imag, np.angle(flat_stft[0][2000][100:110].imag))
+  # print(lib_freqs[100])
+  # print(np.cos(lib_freqs[100]) + np.sin(lib_freqs[100]))
+  # print(np.arctan(lib_freqs[100]))
+  # print(flat_stft[0][2000][100].imag)
 
-  # for i in range(reciprocal_freqs.size):
+  # print(len(lib_freqs[0][0]), flat_stft.size)
+
+  # for i in range(len(flat_stft[0])): # flat_stft.size
   #   flat_stft[0][i].real *= reciprocal_freqs[i]
-  #   # flat_stft[0][i].imag *= np.sqrt(reciprocal_freqs[i])
   #   flat_stft[1][i].real *= reciprocal_freqs[i]
-  #   # flat_stft[1][i].imag *= np.sqrt(reciprocal_freqs[i])
-  #   # print(i)
+    # print(lib_freqs[i], i, reciprocal_freqs[i])
 
   # print(flat_stft[0][2000][:10].imag)
   # print(np.max(flat_stft[0]), flat_stft.shape)
 
   """ invert the stft transformation """
-  # iflat_stft = librosa.istft(flat_stft, n_fft=n_fft, hop_length=hop_length)
+  iflat_stft = librosa.istft(flat_stft, n_fft=n_fft, hop_length=hop_length)
   # print(iflat_stft.shape)
 
   """ Reshape into original shape array before flatten """
-  # iflat_reshaped = iflat_stft.reshape((iflat_stft.size // 2, 2), order='F')
+  iflat_reshaped = iflat_stft.reshape((iflat_stft.size // 2, 2), order='F')
   # print(iflat_reshaped.shape)
 
-  # with sf.SoundFile('testReciprocaliSTFT.wav', 'w', 44100, 2, 'PCM_24') as f:
-    # f.write(iflat_reshaped)
+  with sf.SoundFile('testReciprocaliSTFT.wav', 'w', 44100, 2, 'PCM_24') as f:
+    f.write(iflat_reshaped)
 
   """ Does the reshape cause the written file to sound out of phase? 
       NO. (to my ear only). The original appears to sound the same as this written version
