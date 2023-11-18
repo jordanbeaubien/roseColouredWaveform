@@ -5,8 +5,6 @@ import numpy as np
 import librosa
 import soundfile as sf
 
-
-
 # hold string of path to audio file. Must be a .wav
 # filename = "/Users/jb/Desktop/Fall2023/MUSIC_645/Final_Project/DonCaballero_Punkgasm_DirtyLooks-001.wav"
 
@@ -48,17 +46,99 @@ import soundfile as sf
 # plt.title("Magnitude Spectrum")
 # plt.show()
 
-
 # def display_spectrogram(data:np.ndarray, sample_rate:int) -> None:
 def display_spectrogram(filename:str) -> None:
 # needs to be split into two functions
 # this currently transforms using STFT and generates spectrogram
   
-  data, sample_rate = librosa.load(filename, sr=None, mono=False) # sr=None preserves native sample rate of file
+  # data, sample_rate = librosa.load(filename, sr=None, mono=False) # sr=None preserves native sample rate of file
   dataFile = sf.SoundFile(filename, mode='r')
-  data_SF = dataFile.read(always_2d=True)
+  # audiodata = dataFile.read(always_2d=True)
+  audiodata = dataFile.read(frames=4321792, always_2d=True) 
+  
+  # print(audiodata.size // 2 // 2048 * 2048)
 
-  print(len(data_SF) / sample_rate)
+  """ ([L, R], 2) first dimension is length of all samples, each sample is homogenous cell of L & R """
+  # print(audiodata.shape)
+
+  """ flatten 'F' converts to 1D, column-major mode
+  we transformed a shape (samples, 2) where each sample has the left and right
+  sample per homogenous cell, into an array of all left and then all right samples.
+  The array will always be an even number in size. """
+  # print(audiodata.shape)
+  # flat_audiotata = audiodata.flatten(order='F')
+  reshaped_audiodata = audiodata.reshape((2, audiodata.size // 2), order='F')
+  # print(reshaped_audiodata.shape)
+
+  """ n_fft : length of the windowed signal. """
+  n_fft = 16384 # default = 2048
+  hop_length = n_fft // 2
+
+  """ Check whether the Constant Overlap Add Constraint is met. """
+  assert signal.check_COLA('hann', n_fft, hop_length) == True
+
+  flat_stft = librosa.stft(reshaped_audiodata, n_fft=n_fft, hop_length=hop_length)
+  print(flat_stft.shape) # flat_stft.shape -> (2, 8193, 528)
+  # print(flat_stft[0][0].real)
+  # print(flat_stft[0][10].real)
+
+  freq_per_frame = np.abs(flat_stft)
+  """ Get frequencies for chosen stft window. """
+  lib_freqs = librosa.fft_frequencies(sr=dataFile.samplerate, n_fft=n_fft)
+  print(len(lib_freqs), len(freq_per_frame[0]))
+  print(lib_freqs[len(lib_freqs) // 2 - 1])
+  
+  """ 1/freq ratio for each frequency """
+  reciprocal_freqs = np.reciprocal(lib_freqs, where=lib_freqs>0)
+  # for i in range(100):
+  #   print(f'freq: {lib_freqs[i]}, reci: {reciprocal_freqs[i]}')
+  # print(reciprocal_freqs[0])
+
+  """ Get the dB for the left and right channels. """
+  # db_arr = librosa.amplitude_to_db(freq_per_frame[0])
+  # print(f'max:{np.max(db_arr[0])}, min:{np.min(db_arr[0])}, , mean:{np.mean(db_arr[0])}')
+  # print(f'max:{np.max(db_arr[1])}, min:{np.min(db_arr[1])}, , mean:{np.mean(db_arr[1])}')
+  # for i in range(100):
+    # print(f'mag: {freq_per_frame[0][0][i + 200]}, freq: {lib_freqs[i + 200]}')
+    # print(f'mag: {db_arr[i + 200]}, freq: {lib_freqs[i + 200]}')
+
+  """ If I store the maximum value before I pink the spectrum can I use it as a scalar to
+      pink normalize? """
+  
+  # print(len(flat_stft[0].real)) == same as len(reciprocal_freqs)
+
+  # flat_stft[0].real *= reciprocal_freqs -> incorrect dimensions
+  # flat_stft[1].real *= reciprocal_freqs
+
+
+  """ invert the stft transformation """
+  # iflat_stft = librosa.istft(flat_stft, n_fft=n_fft, hop_length=hop_length)
+  # print(iflat_stft.shape)
+
+  """ Reshape into original shape array before flatten """
+  # iflat_reshaped = iflat_stft.reshape((iflat_stft.size // 2, 2), order='F')
+  # print(iflat_reshaped.shape)
+
+  # with sf.SoundFile('testWriteiSTFT.wav', 'w', 44100, 2, 'PCM_24') as f:
+  #   f.write(iflat_reshaped)
+
+  """ Does the reshape cause the written file to sound out of phase? 
+      NO. (to my ear only). The original appears to sound the same as this written version
+      after ONLY reshaping, reshaping again, and writing. """
+  # rereshaped_audiodata = reshaped_audiodata.reshape((reshaped_audiodata.size // 2, 2), order='F')
+  # with sf.SoundFile('testWriteRereshaped.wav', 'w', 44100, 2, 'PCM_24') as f:
+  #   f.write(rereshaped_audiodata)
+
+
+  """ dataFile... information read from audio file """
+  #print(dataFile.samplerate)
+  # print(type(data_SF))
+  # print(len(data_SF) / sample_rate)
+
+
+  # freqArr, segArr, Zxx = signal.stft(data_SF)
+  # data_stft = librosa.stft(data_SF)
+
 
   # with sf.SoundFile('testWriteSF.wav', 'w', 44100, 2, 'PCM_24') as f:
   #   f.write(data_SF)
@@ -74,11 +154,11 @@ def display_spectrogram(filename:str) -> None:
   
   # modifier = 1/8 # less precise
   # modifier = 4
-  FRAME_SIZE = 2048 # default sample rate for librosa, well adapted for music signals
-  HOP_SIZE = 512 # default is win_length // 4
+  # FRAME_SIZE = 2048 # default sample rate for librosa, well adapted for music signals
+  # HOP_SIZE = 512 # default is win_length // 4
 
   # S_scale = librosa.stft(scale, n_fft=FRAME_SIZE, hop_length=HOP_SIZE)
-  data_stft = librosa.stft(data, n_fft=FRAME_SIZE, hop_length=HOP_SIZE)
+  # data_stft = librosa.stft(data, n_fft=FRAME_SIZE, hop_length=HOP_SIZE)
   # print(data_stft.size)
 
   # plot_samples_waveform(dataFile, dataFile.samplerate, "librosaLoad", "blue", "purple")
