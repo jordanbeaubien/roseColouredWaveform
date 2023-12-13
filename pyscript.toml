@@ -1,0 +1,1 @@
+packages = ["librosa", "numpy", "scipy", "pysndfile", "soundfile"]

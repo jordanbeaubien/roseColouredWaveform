@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
+  <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+  <title>RoseColouredWaveform</title>
+
+</head>
+
+<body>
+  <br><br/>
+
+  <form method="get">
+    <fieldset>
+      <legend>> Provide absolute filepath to sound file   ></legend>
+      <input type="text" id="input_text" placeholder="paste filepath here" />
+    </fieldset>
+
+
+    <fieldset>
+      <legend>| Choose colour of sound |</legend>
+      <label><input type="radio" name="radio" id="pink" value="pink" checked="checked"/>Pink</label>
+      <label><input type="radio" name="radio" id="brown" value="brown"/>Brown</label>
+      <label><input type="radio" name="radio" id="white" value="white"/>White</label>
+    </fieldset>
+
+    <fieldset>
+      <legend>> Desired path to destination sound file: ></legend>
+      <input type="text" id="output_text" placeholder="paste filepath here" />
+    </fieldset>
+  </form>
+
+  <br><br/>
+
+  <button id="button_colourize" disabled>Colourize</button>
+  <script src="script.js"></script>
+  <script type="py" src="./main.py"></script>
+  <py-config src="./pyscript.toml"></py-config>
+
+</body>
+
+</html>
