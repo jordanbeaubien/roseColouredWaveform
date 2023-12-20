@@ -10,13 +10,18 @@ interface = rcw_interface()
 interface.displayInterface()
 
 # get input filename
-interface.getInputFile()
+# print("\n")
+while (interface.hasSoundFile == False):
+  interface.getInputFile()
+  
 interface.displayInterface()
 
 # user default settings?
-# interface.setDefault()
-# interface.displayInterface()
+interface.setDefault()
+interface.displayInterface()
 
+interface.getOutFileName()
+interface.displayInterface()
 
 # for each setting, if(self.___) then don't set it
 
