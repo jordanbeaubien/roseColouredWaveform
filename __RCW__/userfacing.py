@@ -35,6 +35,9 @@ class rcw_interface:
     # flag to loop process for multiple audio transformations
     self.transforming = True
 
+    # flag to colourize user input or skip and restart
+    self.submittable = False
+
   # print the user interface here
   def displayInterface(self):
     '''
@@ -206,13 +209,30 @@ class rcw_interface:
       else:
         print(" Enter a whole number from 1 to 20,000")
     while not validHiCut:
-      decision = input("\n What is the HIGHEST (integer) frequency that you want left unchanged? ").strip()
+      decision = input(" What is the HIGHEST (integer) frequency that you want left unchanged? ").strip()
       self.checkSpecialInput(decision)
       if (self.isValidFrequency(decision)):
         self.hiCut = int(decision)
         validHiCut = True
       else:
         print(" Enter a whole number from 1 to 20,000")
+
+  def askIfColourize(self):
+    '''
+    Prompt the user to verify inputted information is as they intended.
+    '''
+    validInput = False
+    while not validInput:
+      decision = input("\n If above information is intended...\n Enter 'C' to colourize. Or enter 'R' to restart (C/R): ").lower().strip()
+      self.checkSpecialInput(decision)
+      if decision == "c":
+        validInput = True
+        self.submittable = True
+      elif decision == "r":
+        validInput = True
+        self.initializeRepeat()
+      else:
+        print(" Please input 'C' for Colourize or 'R' for Restart")
 
   def askIfRepeat(self):
     '''
@@ -318,17 +338,12 @@ class rcw_interface:
         1/cbrt(f) less pink.                  """
     lib_freqs[0] = 1.0 # avoid divide by zero
     reciprocal_freqs = np.divide(1, np.sqrt(lib_freqs)) # pink-ish, freq = 1/sqrt(freq)
-    # reciprocal_freqs *= (np.cbrt(993) // 3) # attempt at maintaining volume after transform
+    if (self.loCut == 0.1): # default setting, needs gain enhancement
+      reciprocal_freqs *= (np.cbrt(993) // 3) # attempt at maintaining volume after transform 
 
-    # print(len(lib_freqs))
-    # print(audioData_stft.shape)
-    # print(">>>>>>>> MAX B4 IS" + str(np.mean(audioData_stft)))
-    original_mean = np.mean(audioData_stft)
+    # store original range of audio magnitude
     original_min = np.min(audioData_stft)
     original_max = np.max(audioData_stft)
-    print(f'Original Mean: {original_mean}')
-    print(f'Original Min: {original_min}')
-    print(f'Original Max: {original_max}')
 
     # multiply the magnitudes of a frequency for every frame according to the
     # prescribed ratio for the weighting of that frequency along the spectrum.
@@ -339,19 +354,8 @@ class rcw_interface:
       audioData_stft[0][i] *= reciprocal_freqs[i] # left channel
       audioData_stft[1][i] *= reciprocal_freqs[i] # right channel
 
-    # print(">>>>>>>> MAX AF IS" + str(np.mean(audioData_stft)))
-    transformed_mean = np.mean(audioData_stft)
-    transformed_min = np.min(audioData_stft)
-    transformed_max = np.max(audioData_stft)
-    # transformed_scaler = original_mean / transformed_mean
-    transformed_scaler = original_max / transformed_max
-    audioData_stft[0] *= transformed_scaler
-    audioData_stft[1] *= transformed_scaler
+    # use original magnitude as a hard limit to transformed magnitude
     audioData_stft.clip(original_min, original_max)
-    print(f'Transformed Mean: {transformed_mean}')
-    print(f'Transformed Min: {transformed_min}')
-    print(f'Transformed Max: {transformed_max}')
-    print(f'Transformation Scalar: {transformed_scaler}')
     
     """ Invert the stft transformation. """
     print(" Inverting the Short-Time Fourier Transform...")
@@ -370,6 +374,7 @@ class rcw_interface:
 
     # finished with opened audio file
     self.soundFile.close()
+
 
 
 # gets
