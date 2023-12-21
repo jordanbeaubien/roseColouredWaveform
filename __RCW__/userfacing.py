@@ -1,4 +1,9 @@
-#import transformation
+# ------------------------------------------------- #
+#  Class  : rcw_interface (Rose Coloured Waveform)
+#  Author : Jordan Beaubien; December 20th, 2023
+#  Usage  : Ualberta MUSIC 645 Final Project
+#  Prof.  : Dr. Scott Smallwood
+# ------------------------------------------------- #
 
 import librosa              # pip install librosa
 import numpy as np          # pip install numpy
@@ -192,8 +197,8 @@ class rcw_interface:
   def askCutoffFrequencies(self):
     '''
     Prompt the user to choose hiCut and loCut frequencies for the transformation.
-    Frequencies below the loCut will not be transformed.
-    Frequencies above the hiCut will not be transformed.
+    Frequencies below the loCut will not be transformed/scaled.
+    Frequencies above the hiCut will not be transformed/scaled.
     '''
     validHiCut = False
     validLoCut = False
@@ -374,8 +379,3 @@ class rcw_interface:
 
     # finished with opened audio file
     self.soundFile.close()
-
-
-
-# gets
-# SUBMIT?
